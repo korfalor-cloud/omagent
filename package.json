@@ -1,0 +1,29 @@
+{
+  "name": "omagent",
+  "version": "0.1.0",
+  "description": "Terminal-native AI coding agent with persistent memory and autonomous workflows",
+  "type": "module",
+  "bin": {
+    "omagent": "./bin/omagent"
+  },
+  "scripts": {
+    "dev": "bun run src/cli/index.ts",
+    "build": "bun build src/cli/index.ts --compile --outfile dist/omagent",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.1",
+    "drizzle-orm": "^0.45.2",
+    "effect": "^3.21.3",
+    "hono": "^4.12.25",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^6.0.3"
+  }
+}
