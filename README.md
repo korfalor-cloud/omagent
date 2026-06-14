@@ -23,7 +23,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/omagent.git
+git clone https://github.com/korfalor-cloud/omagent.git
 cd omagent
 
 # Install dependencies
