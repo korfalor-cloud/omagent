@@ -1,5 +1,6 @@
 import type { LLMProvider, LLMMessage, LLMResponse, LLMChatOptions, LLMStreamChunk } from "../core/types.js";
 import { getProvider, type ProviderConfig } from "../config/index.js";
+import { MiMoFree, type MiMoFreeMessage } from "./mimo-free.js";
 
 class OpenAICompatibleProvider implements LLMProvider {
   id: string;
@@ -71,6 +72,51 @@ const providerCache = new Map<string, LLMProvider>();
 export function createProvider(providerId: string): LLMProvider {
   const cached = providerCache.get(providerId);
   if (cached) return cached;
+
+  // MiMo Free provider - uses anonymous bootstrap, no API key needed
+  if (providerId === "mimo-free" || providerId === "mimo") {
+    const provider: LLMProvider = {
+      id: "mimo-free",
+      name: "MiMo Auto (free)",
+      async chat(messages: LLMMessage[], options?: LLMChatOptions): Promise<LLMResponse> {
+        const mimoMessages: MiMoFreeMessage[] = messages.map((m) => ({
+          role: m.role as "system" | "user" | "assistant",
+          content: m.content,
+        }));
+        const result = await MiMoFree.chat(mimoMessages, {
+          model: options?.model || "mimo-auto",
+          temperature: options?.temperature,
+          maxTokens: options?.maxTokens,
+        });
+        return {
+          content: result.content,
+          model: "mimo-auto",
+          usage: result.usage ? {
+            prompt_tokens: result.usage.prompt_tokens,
+            completion_tokens: result.usage.completion_tokens,
+            total_tokens: result.usage.total_tokens,
+          } : undefined,
+        };
+      },
+      async *stream(messages: LLMMessage[], options?: LLMChatOptions): AsyncGenerator<LLMStreamChunk> {
+        const mimoMessages: MiMoFreeMessage[] = messages.map((m) => ({
+          role: m.role as "system" | "user" | "assistant",
+          content: m.content,
+        }));
+        for await (const chunk of MiMoFree.stream(mimoMessages, {
+          model: options?.model || "mimo-auto",
+          temperature: options?.temperature,
+          maxTokens: options?.maxTokens,
+        })) {
+          yield { type: "text", content: chunk };
+        }
+        yield { type: "done" };
+      },
+    };
+    providerCache.set(providerId, provider);
+    return provider;
+  }
+
   const config = getProvider(providerId);
   if (!config) throw new Error(`Unknown provider: ${providerId}`);
   const provider = new OpenAICompatibleProvider(config);

@@ -23,7 +23,7 @@ export const AgentConfigSchema = z.object({
 
 export const OmAgentConfigSchema = z.object({
   version: z.string().default("0.1.0"),
-  defaultProvider: z.string().default("openai"),
+  defaultProvider: z.string().default("mimo-free"),
   defaultModel: z.string().default("gpt-4o"),
   providers: z.array(ProviderConfigSchema).default([]),
   agents: z.record(z.string(), AgentConfigSchema).default({}),
