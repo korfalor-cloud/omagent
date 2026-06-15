@@ -2,7 +2,7 @@
 // OmAgent Core Types
 // ============================================================
 
-export type AgentMode = "build" | "plan" | "compose";
+export type AgentMode = "build" | "plan" | "compose" | "explore";
 
 export type ToolPermission = "allow" | "deny" | "ask";
 
