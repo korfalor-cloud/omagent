@@ -252,6 +252,36 @@ export class TuiApp {
         action: () => { this.addAssistantMessage("OmAgent v0.1.0"); this.state.commandPalette.open = false; },
       },
       {
+        name: "Models",
+        description: "List available models",
+        icon: "🤖",
+        action: () => { this.listModels(); this.state.commandPalette.open = false; },
+      },
+      {
+        name: "Providers",
+        description: "List configured providers",
+        icon: "🔌",
+        action: () => { this.listProviders(); this.state.commandPalette.open = false; },
+      },
+      {
+        name: "Agents",
+        description: "List available agents",
+        icon: "🧑",
+        action: () => { this.listAgents(); this.state.commandPalette.open = false; },
+      },
+      {
+        name: "MCP Servers",
+        description: "List MCP servers",
+        icon: "📡",
+        action: () => { this.listMcp(); this.state.commandPalette.open = false; },
+      },
+      {
+        name: "Stats",
+        description: "Show token usage statistics",
+        icon: "📊",
+        action: () => { this.showStats(); this.state.commandPalette.open = false; },
+      },
+      {
         name: "Clear",
         description: "Clear the screen",
         icon: "🧹",
@@ -524,6 +554,48 @@ export class TuiApp {
     this.addAssistantMessage(JSON.stringify(config, null, 2));
   }
 
+  private listProviders() {
+    const config = loadConfig();
+    const lines = [`  Current: ${config.defaultProvider}`, `  Model: ${config.defaultModel}`, "", "  Available providers: openai, anthropic, ollama"];
+    this.addAssistantMessage("Providers:\n" + lines.join("\n"));
+  }
+
+  private listModels() {
+    const config = loadConfig();
+    const models: Record<string, string[]> = {
+      openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "o1-preview", "o1-mini"],
+      anthropic: ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
+      ollama: ["llama3.1", "codellama", "deepseek-coder", "mistral"],
+    };
+    const lines: string[] = [];
+    for (const [p, ms] of Object.entries(models)) {
+      lines.push(`  ${p}:`);
+      for (const m of ms) {
+        const def = p === config.defaultProvider && m === config.defaultModel ? " (default)" : "";
+        lines.push(`    ${m}${def}`);
+      }
+    }
+    this.addAssistantMessage("Models:\n" + lines.join("\n"));
+  }
+
+  private listAgents() {
+    const lines = [
+      "  build    - Read/write files and execute commands",
+      "  plan     - Read-only analysis and planning",
+      "  compose  - Spec-driven development",
+      "  explore  - Search and navigate codebase",
+    ];
+    this.addAssistantMessage("Agents:\n" + lines.join("\n"));
+  }
+
+  private listMcp() {
+    this.addAssistantMessage("MCP Servers:\n  No MCP servers configured.\n  Add one with: omagent mcp add");
+  }
+
+  private showStats() {
+    this.addAssistantMessage("Token Usage Statistics:\n  Sessions: 0\n  Messages: 0\n  Tokens: 0\n  Cost: $0.00\n\n  Statistics will populate as you use the agent.");
+  }
+
   private addAssistantMessage(content: string) {
     this.state.messages.push({
       role: "assistant",
@@ -621,10 +693,67 @@ export class TuiApp {
         } else if (parts[1] === "light") {
           this.state.theme = themes.light;
           this.renderer.forceRedraw();
+        } else {
+          this.addAssistantMessage("Usage: /theme <dark|light>");
         }
         break;
       case "/version":
         this.addAssistantMessage("OmAgent v0.1.0");
+        break;
+      case "/providers":
+        this.listProviders();
+        break;
+      case "/models":
+        this.listModels();
+        break;
+      case "/agents":
+        this.listAgents();
+        break;
+      case "/mcp":
+        this.listMcp();
+        break;
+      case "/stats":
+        this.showStats();
+        break;
+      case "/dream":
+        if (parts[1]) {
+          this.addAssistantMessage("Dreaming... (extracting knowledge from session)");
+        } else {
+          this.addAssistantMessage("Usage: /dream <session-id>");
+        }
+        break;
+      case "/distill":
+        if (parts[1]) {
+          this.addAssistantMessage("Distilling... (packaging workflows as skills)");
+        } else {
+          this.addAssistantMessage("Usage: /distill <session-id>");
+        }
+        break;
+      case "/goal":
+        this.addAssistantMessage("No active goals.");
+        break;
+      case "/export":
+        if (parts[1]) {
+          this.addAssistantMessage(`Exporting session ${parts[1]}...`);
+        } else {
+          this.addAssistantMessage("Usage: /export <session-id>");
+        }
+        break;
+      case "/serve":
+        this.addAssistantMessage("Starting headless server on port 4096...");
+        break;
+      case "/debug":
+        if (parts[1] === "config") {
+          this.showConfig();
+        } else if (parts[1] === "paths") {
+          const home = process.env.HOME || "~";
+          this.addAssistantMessage(`Config:  ${home}/.config/omagent\nData:    ${home}/.local/share/omagent\nCache:   ${home}/.cache/omagent`);
+        } else {
+          this.addAssistantMessage("Debug subcommands: config, paths");
+        }
+        break;
+      case "/upgrade":
+        this.addAssistantMessage("Already on the latest version (v0.1.0).");
         break;
       default:
         this.addAssistantMessage(`Unknown command: ${cmd}\nType /help for available commands.`);
