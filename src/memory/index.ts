@@ -23,8 +23,8 @@ export class MemoryManager {
     }).onConflictDoNothing().run();
     const raw = (this.db as any).$client;
     try {
-      raw.prepare(`INSERT INTO memory_fts (id, path, scope, scope_id, type, content) VALUES (?, ?, ?, ?, ?, ?)`)
-        .run(id, entry.path, entry.scope, entry.scopeId ?? null, entry.type, entry.content);
+      raw.run(`INSERT INTO memory_fts (id, path, scope, scope_id, type, content) VALUES (?, ?, ?, ?, ?, ?)`,
+        id, entry.path, entry.scope, entry.scopeId ?? null, entry.type, entry.content);
     } catch {}
     return id;
   }
@@ -39,7 +39,7 @@ export class MemoryManager {
     if (options?.type) { sql += ` AND type = ?`; params.push(options.type); }
     sql += ` LIMIT ?`; params.push(limit);
     try {
-      const rows = raw.prepare(sql).all(...params) as any[];
+      const rows = raw.all(sql, ...params) as any[];
       return rows.map((r) => ({ id: r.id, path: r.path, scope: r.scope, type: r.type, content: r.content, rank: 0 }));
     } catch { return []; }
   }
@@ -47,7 +47,7 @@ export class MemoryManager {
   async delete(id: string): Promise<void> {
     this.db.delete(schema.memory).where(eq(schema.memory.id, id)).run();
     const raw = (this.db as any).$client;
-    try { raw.prepare(`DELETE FROM memory_fts WHERE id = ?`).run(id); } catch {}
+    try { raw.run(`DELETE FROM memory_fts WHERE id = ?`, id); } catch {}
   }
 
   async list(scope?: MemoryScope, scopeId?: string): Promise<MemorySearchResult[]> {

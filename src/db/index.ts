@@ -1,5 +1,5 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema.js";
 import path from "path";
 import fs from "fs";
@@ -21,10 +21,10 @@ let _db: ReturnType<typeof createDb> | null = null;
 
 function createDb(dbPath?: string) {
   const sqlite = new Database(dbPath ?? getDbPath());
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("synchronous = OFF");
-  sqlite.pragma("cache_size = 10000");
-  sqlite.pragma("temp_store = MEMORY");
+  sqlite.exec("PRAGMA journal_mode = WAL");
+  sqlite.exec("PRAGMA synchronous = OFF");
+  sqlite.exec("PRAGMA cache_size = 10000");
+  sqlite.exec("PRAGMA temp_store = MEMORY");
   return drizzle(sqlite, { schema });
 }
 
@@ -39,7 +39,7 @@ export function initDb(dbPath?: string) {
 }
 
 export function initFts5(db: ReturnType<typeof createDb>) {
-  const raw = (db as any).$client as InstanceType<typeof Database>;
+  const raw = (db as any).$client as Database;
   raw.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
       id, path, scope, scope_id, type, content,
@@ -49,7 +49,7 @@ export function initFts5(db: ReturnType<typeof createDb>) {
 }
 
 export function runMigrations(db: ReturnType<typeof createDb>) {
-  const raw = (db as any).$client as InstanceType<typeof Database>;
+  const raw = (db as any).$client as Database;
   raw.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
